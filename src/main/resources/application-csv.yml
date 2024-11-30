@@ -1,5 +1,5 @@
 task:
   store:
     csv:
-      filepath: "tasks-store.csv"
+      filepath: "store/tasks-store.csv"
       delimiter: ","
