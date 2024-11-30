@@ -1,0 +1,7 @@
+spring:
+  profiles:
+    active: csv
+  application:
+    name: tasks-cli
+  main:
+    banner-mode: off
