@@ -1,0 +1,5 @@
+task:
+  store:
+    csv:
+      filepath: "tasks-store.csv"
+      delimiter: ","

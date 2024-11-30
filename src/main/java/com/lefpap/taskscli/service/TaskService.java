@@ -4,6 +4,7 @@ import com.lefpap.taskscli.mapper.TaskMapper;
 import com.lefpap.taskscli.model.Task;
 import com.lefpap.taskscli.model.dto.CliTask;
 import com.lefpap.taskscli.model.dto.CliTaskCreate;
+import com.lefpap.taskscli.model.dto.CliTaskUpdate;
 import com.lefpap.taskscli.store.TaskStore;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,25 @@ public class TaskService {
     }
 
     public CliTask createTask(CliTaskCreate cliTaskCreate) {
-        Task createdTask = taskStore.save(taskMapper.toTask(cliTaskCreate));
+        Task createdTask = taskStore.save(taskMapper.mergeToTask(cliTaskCreate));
         return taskMapper.toCliTask(createdTask);
+    }
+
+    public CliTask updateTask(CliTaskUpdate cliTaskUpdate) {
+        Task task = taskStore.findOne(cliTaskUpdate.id())
+            .orElseThrow();
+
+        Task updatedTask = taskStore.save(taskMapper.mergeToTask(cliTaskUpdate, task));
+        return taskMapper.toCliTask(updatedTask);
+    }
+
+    public void deleteTask(Long id) {
+        taskStore.findOne(id)
+            .map(Task::id)
+            .ifPresent(taskStore::delete);
+    }
+
+    public void clearTasks() {
+        taskStore.clear();
     }
 }
