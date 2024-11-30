@@ -34,7 +34,8 @@ public class TaskMapper {
             .toList();
     }
 
-    public Task mergeToTask(CliTaskCreate cliTaskCreate) {
+    public Task toTask(CliTaskCreate cliTaskCreate) {
+
         if (Objects.isNull(cliTaskCreate)) {
             return null;
         }
