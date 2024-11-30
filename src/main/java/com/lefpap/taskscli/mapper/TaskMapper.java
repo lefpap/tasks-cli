@@ -35,6 +35,7 @@ public class TaskMapper {
     }
 
     public Task toTask(CliTaskCreate cliTaskCreate) {
+
         if (Objects.isNull(cliTaskCreate)) {
             return null;
         }

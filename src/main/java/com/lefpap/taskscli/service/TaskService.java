@@ -26,7 +26,7 @@ public class TaskService {
     }
 
     public CliTask createTask(CliTaskCreate cliTaskCreate) {
-        Task createdTask = taskStore.save(taskMapper.toTask(cliTaskCreate));
+        Task createdTask = taskStore.save(taskMapper.mergeToTask(cliTaskCreate));
         return taskMapper.toCliTask(createdTask);
     }
 
