@@ -6,6 +6,7 @@ import com.lefpap.taskscli.model.dto.CliTaskCreate;
 import com.lefpap.taskscli.model.dto.CliTaskUpdate;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,11 +41,8 @@ public class TaskMapper {
             return null;
         }
 
-        return new Task(
-            null,
-            cliTaskCreate.title(),
-            null
-        );
+        return Task.empty()
+            .withTitle(cliTaskCreate.title());
     }
 
     public Task mergeToTask(CliTaskUpdate cliTaskUpdate, Task task) {
@@ -52,10 +50,8 @@ public class TaskMapper {
             return null;
         }
 
-        return new Task(
-            cliTaskUpdate.id(),
-            cliTaskUpdate.title(),
-            task.status()
-        );
+        return task
+            .withId(cliTaskUpdate.id())
+            .withTitle(cliTaskUpdate.title());
     }
 }

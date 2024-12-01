@@ -5,3 +5,9 @@ spring:
     name: tasks-cli
   main:
     banner-mode: off
+logging:
+  pattern:
+    console:
+  file:
+    path: logs
+    name: logs/app.log

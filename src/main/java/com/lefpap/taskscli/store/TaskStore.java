@@ -9,10 +9,12 @@ import java.util.Optional;
 
 public interface TaskStore {
     List<Task> findAll();
+    long countAll();
     List<Task> findByStatus(@Nonnull TaskStatus status);
-    List<Task> findByStatusAnyOf(@Nonnull TaskStatus... statuses);
+    long countByStatus(@Nonnull TaskStatus status);
     Optional<Task> findOne(@Nonnull Long id);
     Task save(@Nonnull Task task);
     void delete(@Nonnull Long id);
     void clear();
+    void clearTasksOfStatus(@Nonnull TaskStatus status);
 }

@@ -46,7 +46,10 @@ public final class CsvTaskLoader {
         String title = source[1];
         TaskStatus status = TaskStatus.valueOf(source[2]);
 
-        return new Task(id, title, status);
+        return Task.empty()
+            .withId(id)
+            .withTitle(title)
+            .withStatus(status);
     }
 
     public void saveTasks(Map<Long, Task> taskMap) {

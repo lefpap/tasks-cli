@@ -33,4 +33,5 @@ build/
 .vscode/
 
 ### Custom ignores ###
+logs/
 store/
