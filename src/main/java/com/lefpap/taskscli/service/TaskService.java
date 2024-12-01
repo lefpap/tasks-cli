@@ -2,6 +2,7 @@ package com.lefpap.taskscli.service;
 
 import com.lefpap.taskscli.mapper.TaskMapper;
 import com.lefpap.taskscli.model.Task;
+import com.lefpap.taskscli.model.TaskStatus;
 import com.lefpap.taskscli.model.dto.CliTask;
 import com.lefpap.taskscli.model.dto.CliTaskCreate;
 import com.lefpap.taskscli.model.dto.CliTaskUpdate;
@@ -25,6 +26,18 @@ public class TaskService {
         return taskMapper.toCliTaskList(taskStore.findAll());
     }
 
+    public long getTotalTasks() {
+        return taskStore.countAll();
+    }
+
+    public List<CliTask> getTasksOfStatus(TaskStatus status) {
+        return taskMapper.toCliTaskList(taskStore.findByStatus(status));
+    }
+
+    public long getTotalTasksOfStatus(TaskStatus status) {
+        return taskStore.countByStatus(status);
+    }
+
     public CliTask createTask(CliTaskCreate cliTaskCreate) {
         Task createdTask = taskStore.save(taskMapper.toTask(cliTaskCreate));
         return taskMapper.toCliTask(createdTask);
@@ -42,6 +55,10 @@ public class TaskService {
         taskStore.findOne(id)
             .map(Task::id)
             .ifPresent(taskStore::delete);
+    }
+
+    public void clearTasksOfStatus(TaskStatus status) {
+        taskStore.clearTasksOfStatus(status);
     }
 
     public void clearTasks() {

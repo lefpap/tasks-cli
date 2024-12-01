@@ -7,6 +7,7 @@ import jakarta.annotation.Nonnull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.*;
 
 @Repository
@@ -34,18 +35,22 @@ public class CsvTaskStore implements TaskStore {
     }
 
     @Override
+    public long countAll() {
+        return (long) tasksCache().size();
+    }
+
+    @Override
     public List<Task> findByStatus(@Nonnull TaskStatus status) {
-        return List.copyOf(taskCache.values().stream()
+        return List.copyOf(tasksCache().values().stream()
             .filter(task -> status.equals(task.status()))
             .toList());
     }
 
     @Override
-    public List<Task> findByStatusAnyOf(@Nonnull TaskStatus... statuses) {
-        return List.copyOf(taskCache.values().stream()
-            .filter(task -> Arrays.stream(statuses)
-                .anyMatch(status -> status.equals(task.status())))
-            .toList());
+    public long countByStatus(@Nonnull TaskStatus status) {
+        return tasksCache().values().stream()
+            .filter(task -> status.equals(task.status()))
+            .count();
     }
 
     @Override
@@ -63,7 +68,11 @@ public class CsvTaskStore implements TaskStore {
     private Task createTask(Task task) {
         // Create a new task if no ID is provided
         Long newId = generateId();
-        Task newTask = new Task(newId, task.title(), TaskStatus.PENDING);
+        Task newTask = task
+            .withId(newId)
+            .withStatus(TaskStatus.PENDING)
+            .withCreatedAt(Instant.now());
+
         tasksCache().put(newId, newTask);
         csvTaskLoader.saveTasks(tasksCache());
         return newTask;
@@ -71,7 +80,9 @@ public class CsvTaskStore implements TaskStore {
 
     private Task updateTask(Task task) {
         // Update an existing task or add it if it doesn't exist
-        Task updatedTask = new Task(task.id(), task.title(), task.status());
+        Task updatedTask = task
+            .withUpdatedAt(Instant.now());
+
         tasksCache().put(task.id(), updatedTask);
         csvTaskLoader.saveTasks(tasksCache());
         return updatedTask;
@@ -94,5 +105,13 @@ public class CsvTaskStore implements TaskStore {
     public void clear() {
         tasksCache().clear();
         csvTaskLoader.saveTasks(tasksCache());
+    }
+
+    @Override
+    public void clearTasksOfStatus(@Nonnull TaskStatus status) {
+        tasksCache().entrySet().stream()
+            .filter(taskEntry -> status.equals(taskEntry.getValue().status()))
+            .map(Map.Entry::getKey)
+            .forEach(tasksCache()::remove);
     }
 }
