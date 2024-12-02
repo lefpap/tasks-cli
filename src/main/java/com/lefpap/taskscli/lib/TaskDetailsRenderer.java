@@ -6,22 +6,20 @@ import org.springframework.shell.table.*;
 
 public final class TaskDetailsRenderer {
 
-    private static final String TASK_LABEL_ID = "ID";
-    private static final String TASK_LABEL_TITLE = "Title";
-    private static final String TASK_LABEL_COMPLETED = "COMPLETED";
+    private static final String TASK_LABEL_ID = "ID: ";
+    private static final String TASK_LABEL_TITLE = "Title: ";
+    private static final String TASK_LABEL_COMPLETED = "COMPLETED: ";
 
     private static final String TASK_COMPLETED_VALUE = "[X]";
     private static final String TASK_PENDING_VALUE = "[ ]";
 
     private final int terminalWidth;
     private final CliTask task;
-    private final String title;
 
     private TaskDetailsRenderer(Builder builder) {
         // Prevent instantiation
         this.terminalWidth = builder.terminalWidth;
         this.task = builder.task;
-        this.title = builder.title;
     }
 
     public static Builder builder() {
@@ -30,15 +28,7 @@ public final class TaskDetailsRenderer {
 
     public String render() {
         Table taskDetails = buildTaskDetails();
-
-        return """
-            %s
-            %s
-            """
-            .formatted(
-                title,
-                taskDetails.render(terminalWidth)
-            );
+        return taskDetails.render(terminalWidth);
     }
 
     private Table buildTaskDetails() {
@@ -60,25 +50,16 @@ public final class TaskDetailsRenderer {
         return new TableBuilder(modelBuilder.build())
             .addFullBorder(BorderStyle.fancy_heavy)
             .on(CellMatchers.column(0)).addSizer(new NoWrapSizeConstraints())
-            .on(CellMatchers.column(1)).addSizer(new NoWrapSizeConstraints())
-            .on(CellMatchers.column(2))
-                .addAligner(SimpleHorizontalAligner.center)
-                .addSizer(new NoWrapSizeConstraints())
+            .on(CellMatchers.column(1)).addSizer(new AbsoluteWidthSizeConstraints(50))
             .build();
     }
 
     public static class Builder {
         private CliTask task;
-        private String title;
         private int terminalWidth;
 
         public Builder withTask(CliTask task) {
             this.task = task;
-            return this;
-        }
-
-        public Builder withTitle(String title) {
-            this.title = title;
             return this;
         }
 

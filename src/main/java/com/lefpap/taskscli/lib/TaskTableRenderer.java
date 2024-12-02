@@ -2,6 +2,7 @@ package com.lefpap.taskscli.lib;
 
 import com.lefpap.taskscli.model.TaskStatus;
 import com.lefpap.taskscli.model.dto.CliTask;
+import org.jline.terminal.Terminal;
 import org.springframework.shell.table.*;
 
 import java.util.ArrayList;
@@ -17,18 +18,16 @@ public final class TaskTableRenderer {
     private static final String TASK_COMPLETED_VALUE = "[X]";
     private static final String TASK_PENDING_VALUE = "[ ]";
 
-    private final int terminalWidth;
+    private final Terminal terminal;
     private final List<CliTask> tasks;
-    private final String title;
     private final Long totalTaskCount;
     private final Long completedTaskCount;
     private final Long pendingTaskCount;
 
     private TaskTableRenderer(Builder builder) {
         // Prevent instantiation
-        this.terminalWidth = builder.terminalWidth;
+        this.terminal = builder.terminal;
         this.tasks = List.copyOf(builder.tasks);
-        this.title = builder.title;
         this.totalTaskCount = builder.totalTaskCount;
         this.completedTaskCount = builder.completedTaskCount;
         this.pendingTaskCount = builder.pendingTaskCount;
@@ -47,14 +46,11 @@ public final class TaskTableRenderer {
         String metadata = buildMetaData();
 
         return """
-            %s
-            %s
-            %s
+            %s%s
             """
             .formatted(
-                title,
-                tasksTable.render(terminalWidth),
-                metadata
+                metadata,
+                tasksTable.render(terminal.getWidth())
             );
     }
 
@@ -73,22 +69,24 @@ public final class TaskTableRenderer {
                 : TASK_PENDING_VALUE));
 
         return new TableBuilder(modelBuilder.build())
-            .addFullBorder(BorderStyle.fancy_light)
+            .addFullBorder(BorderStyle.fancy_heavy)
             .on(CellMatchers.column(0)).addSizer(new AbsoluteWidthSizeConstraints(5))
-            .on(CellMatchers.column(1)).addSizer(new NoWrapSizeConstraints())
-            .on(CellMatchers.column(2)).addAligner(SimpleHorizontalAligner.center)
+            .on(CellMatchers.column(1)).addSizer(new AbsoluteWidthSizeConstraints(50))
+            .on(CellMatchers.column(2)).addAligner(SimpleVerticalAligner.middle).addAligner(SimpleHorizontalAligner.center)
             .build();
     }
 
     private String buildMetaData() {
-        return "Total: %s | Completed: %s | Pending: %s"
-            .formatted(totalTaskCount, completedTaskCount, pendingTaskCount);
+        return """
+            TASKS (%d/%d)
+            Completed: %s | Pending: %s
+            """
+            .formatted(tasks.size(), totalTaskCount, completedTaskCount, pendingTaskCount);
     }
 
     public static class Builder {
         private List<CliTask> tasks = new ArrayList<>();
-        private String title;
-        private int terminalWidth;
+        private Terminal terminal;
         private long totalTaskCount;
         private long completedTaskCount;
         private long pendingTaskCount;
@@ -117,13 +115,8 @@ public final class TaskTableRenderer {
             return this;
         }
 
-        public Builder withTitle(String title) {
-            this.title = title;
-            return this;
-        }
-
-        public Builder withTerminalWidth(int width) {
-            this.terminalWidth = width;
+        public Builder withTerminal(Terminal terminal) {
+            this.terminal = terminal;
             return this;
         }
 

@@ -1,15 +1,19 @@
 package com.lefpap.taskscli.service;
 
+import com.lefpap.taskscli.exception.TaskNotFoundException;
 import com.lefpap.taskscli.mapper.TaskMapper;
 import com.lefpap.taskscli.model.Task;
 import com.lefpap.taskscli.model.TaskStatus;
-import com.lefpap.taskscli.model.dto.CliTask;
-import com.lefpap.taskscli.model.dto.CliTaskCreate;
-import com.lefpap.taskscli.model.dto.CliTaskUpdate;
+import com.lefpap.taskscli.model.dto.*;
 import com.lefpap.taskscli.store.TaskStore;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 public class TaskService {
@@ -22,12 +26,56 @@ public class TaskService {
         this.taskMapper = taskMapper;
     }
 
-    public List<CliTask> getTasks() {
-        return taskMapper.toCliTaskList(taskStore.findAll());
+    public List<CliTask> getTasks(CliTaskListOptions cliTaskListOptions) {
+        return Optional.ofNullable(cliTaskListOptions)
+            .map(options -> {
+                if (cliTaskListOptions.all()) {
+                    return taskMapper.toCliTaskList(taskStore.findAll());
+                }
+                if (Objects.nonNull(cliTaskListOptions.status())) {
+                    return taskMapper.toCliTaskList(taskStore.findByStatus(cliTaskListOptions.status()));
+                }
+
+                return taskMapper.toCliTaskList(taskStore.findAll());
+            })
+            .orElseGet(() -> taskMapper.toCliTaskList(taskStore.findAll()));
+
     }
 
     public long getTotalTasks() {
         return taskStore.countAll();
+    }
+
+    public CliTask findTaskById(Long id) {
+        Task task = taskStore.findOne(id)
+            .orElseThrow(() -> new TaskNotFoundException(id));
+
+        return taskMapper.toCliTask(task);
+    }
+
+    public List<CliTask> searchTasks(CliTaskSearchParams cliTaskSearchParams) {
+        // TODO: improve searching of tasks
+
+        Stream<Task> taskStream = taskStore.findAll().stream();
+        if (Objects.nonNull(cliTaskSearchParams.title())) {
+            taskStream = taskStream.filter(task -> task.title().contains(cliTaskSearchParams.title()));
+        }
+
+        LocalDate fromDate = cliTaskSearchParams.fromDate();
+        LocalDate toDate = cliTaskSearchParams.toDate();
+        if (Objects.nonNull(fromDate) && Objects.nonNull(toDate)) {
+            taskStream = taskStream.filter(task -> {
+                LocalDate createdDate = task.createdAt().atZone(ZoneId.systemDefault()).toLocalDate();
+                return createdDate.isAfter(fromDate) && createdDate.isBefore(toDate);
+            });
+        } else if (Objects.nonNull(fromDate)) {
+            taskStream = taskStream.filter(task -> {
+                LocalDate createdDate = task.createdAt().atZone(ZoneId.systemDefault()).toLocalDate();
+                return createdDate.isEqual(fromDate);
+            });
+        }
+
+        return taskMapper.toCliTaskList(taskStream.toList());
     }
 
     public List<CliTask> getTasksOfStatus(TaskStatus status) {
@@ -57,11 +105,23 @@ public class TaskService {
             .ifPresent(taskStore::delete);
     }
 
-    public void clearTasksOfStatus(TaskStatus status) {
-        taskStore.clearTasksOfStatus(status);
+    public TaskStatus toggleTaskCompletion(Long id) {
+        Task task = taskStore.findOne(id)
+            .orElseThrow(() -> new TaskNotFoundException(id));
+
+        Task toggledTask = task.withStatus(TaskStatus.COMPLETED.equals(task.status())
+            ? TaskStatus.PENDING
+            : TaskStatus.COMPLETED
+        );
+
+        return taskStore.save(toggledTask).status();
     }
 
-    public void clearTasks() {
-        taskStore.clear();
+    public long clearTasksOfStatus(TaskStatus status) {
+        return taskStore.clearTasksOfStatus(status);
+    }
+
+    public long clearTasks() {
+        return taskStore.clear();
     }
 }

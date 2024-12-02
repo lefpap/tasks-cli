@@ -15,6 +15,6 @@ public interface TaskStore {
     Optional<Task> findOne(@Nonnull Long id);
     Task save(@Nonnull Task task);
     void delete(@Nonnull Long id);
-    void clear();
-    void clearTasksOfStatus(@Nonnull TaskStatus status);
+    long clear();
+    long clearTasksOfStatus(@Nonnull TaskStatus status);
 }

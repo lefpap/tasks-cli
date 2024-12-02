@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -45,11 +46,18 @@ public final class CsvTaskLoader {
         Long id = Long.parseLong(source[0]);
         String title = source[1];
         TaskStatus status = TaskStatus.valueOf(source[2]);
+        //TODO: update conversions from csv to to task and vise versa
+        Instant createdAt = Instant.parse(source[3]);
+        Instant updatedAt = source[4].equals("null")
+            ? null
+            : Instant.parse(source[4]);
 
         return Task.empty()
             .withId(id)
             .withTitle(title)
-            .withStatus(status);
+            .withStatus(status)
+            .withCreatedAt(createdAt)
+            .withUpdatedAt(updatedAt);
     }
 
     public void saveTasks(Map<Long, Task> taskMap) {
@@ -68,7 +76,9 @@ public final class CsvTaskLoader {
         return new String[] {
             task.id().toString(),
             task.title(),
-            task.status().name()
+            task.status().name(),
+            String.valueOf(task.createdAt()),
+            String.valueOf(task.updatedAt())
         };
     }
 }

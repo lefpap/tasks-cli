@@ -83,7 +83,7 @@ public class CsvTaskStore implements TaskStore {
         Task updatedTask = task
             .withUpdatedAt(Instant.now());
 
-        tasksCache().put(task.id(), updatedTask);
+        tasksCache().replace(task.id(), updatedTask);
         csvTaskLoader.saveTasks(tasksCache());
         return updatedTask;
     }
@@ -102,16 +102,23 @@ public class CsvTaskStore implements TaskStore {
     }
 
     @Override
-    public void clear() {
+    public long clear() {
+        long tasksCount = tasksCache().size();
         tasksCache().clear();
         csvTaskLoader.saveTasks(tasksCache());
+
+        return tasksCount;
     }
 
     @Override
-    public void clearTasksOfStatus(@Nonnull TaskStatus status) {
-        tasksCache().entrySet().stream()
+    public long clearTasksOfStatus(@Nonnull TaskStatus status) {
+        List<Long> taskIds = tasksCache().entrySet().stream()
             .filter(taskEntry -> status.equals(taskEntry.getValue().status()))
             .map(Map.Entry::getKey)
-            .forEach(tasksCache()::remove);
+            .toList();
+
+        taskIds.forEach(tasksCache()::remove);
+        csvTaskLoader.saveTasks(tasksCache());
+        return taskIds.size();
     }
 }
